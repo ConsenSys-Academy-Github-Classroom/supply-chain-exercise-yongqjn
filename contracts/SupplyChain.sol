@@ -10,7 +10,7 @@ contract SupplyChain {
   uint public skuCount;
 
   // <items mapping>
-  mapping (uint => Item) items;
+  mapping (uint => Item) public items;
 
   // <enum State: ForSale, Sold, Shipped, Received>
   enum State{ ForSale, Sold, Shipped, Received}
@@ -23,6 +23,7 @@ contract SupplyChain {
     address payable seller;
     address payable buyer;
   }
+
   
   /* 
    * Events
@@ -67,7 +68,7 @@ contract SupplyChain {
     _;
     uint _price = items[_sku].price;
     uint amountToRefund = msg.value - _price;
-    payable(items[_sku].buyer).transfer(amountToRefund);
+    items[_sku].buyer.transfer(amountToRefund);
   }
 
   // For each of the following modifiers, use what you learned about modifiers
@@ -102,7 +103,6 @@ contract SupplyChain {
 
   constructor() public {
     owner = msg.sender;
-    skuCount = 0;
     // 1. Set the owner to the transaction sender
     // 2. Initialize the sku count to 0. Question, is this necessary?
   }
@@ -114,8 +114,8 @@ contract SupplyChain {
       sku: skuCount,
       price: _price,
       state : State.ForSale,
-      seller : payable(msg.sender),
-      buyer : payable(address(0))
+      seller : msg.sender,
+      buyer : address(0)
     });
 
     emit LogForSale(skuCount);
@@ -156,7 +156,7 @@ contract SupplyChain {
   function buyItem(uint sku) public forSale(sku) paidEnough(sku) checkValue(sku) payable {
     items[sku].seller.transfer(items[sku].price);
     items[sku].state = State.Sold;
-    items[sku].buyer = payable(msg.sender);
+    items[sku].buyer = msg.sender;
     emit LogSold(sku);
 
   }
